@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Package Tracker</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+</head>
+
+<body class="h-screen flex justify-center items-center bg-gray-200">
+    <div class="max-w-md p-4 bg-white rounded shadow-md">
+        <h1 class="text-3xl font-bold mb-4">Package Tracker</h1>
+        <form id="trackingForm" class="flex flex-col">
+            <label for="trackingNumber" class="sr-only">Enter your tracking number:</label>
+            <input type="text" id="trackingNumber" name="trackingNumber" placeholder="Enter tracking number"
+                class="p-2 pl-10 text-sm text-gray-600">
+            <button type="submit"
+                class="mt-3 bg-green-400 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Track
+                Package</button>
+        </form>
+        <div id="result" class="mt-4 text-gray-600"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const shadowHost = document.getElementById('tracking_system_root');
+            if (shadowHost && shadowHost.shadowRoot) {
+                const deepElement = shadowHost.shadowRoot.querySelector("#app-root > div.jNVSgr");
+                console.log(deepElement); // Este será el elemento dentro del shadow DOM
+            } else {
+                console.log('No se puede acceder al shadow DOM o el elemento no existe');
+            }
+        });
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('trackingForm');
+            const resultDiv = document.getElementById('result');
+
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                const trackingNumber = document.getElementById('trackingNumber').value.trim();
+
+                if (!trackingNumber) {
+                    resultDiv.textContent = 'Please enter a tracking number.';
+                    return;
+                }
+
+                resultDiv.textContent = 'Loading...';
+
+                fetch('/track', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': 'tu-api-key'
+                    },
+                    body: JSON.stringify({
+                        trackingNumber
+                    })
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.status === 'success' && data.details.length > 0) {
+                            resultDiv.innerHTML = data.details.map(detail => `<p>${detail}</p>`).join('');
+                        } else if (data.error) {
+                            resultDiv.textContent = data.error;
+                        } else {
+                            resultDiv.textContent = 'No details found for this tracking number.';
+                        }
+                    })
+                    .catch(error => {
+                        resultDiv.textContent = 'Error: ' + error.message;
+                        console.error('Fetch error:', error);
+                    });
+            });
+        });
+    </script>
+</body>
+
+</html>
